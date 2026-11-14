@@ -1,13 +1,712 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=400, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Multimeter-Simulation</title>
   <style>
+    :root {
+      color-scheme: light;
+      --page-background: #f1f3f2;
+      --page-text: #1f2b2c;
+      --muted-text: #6b7280;
+      --line: #d1d5db;
+      --header-background: #fff;
+      --button-background: #f3f4f6;
+      --button-active: #087cad;
+      --button-active-text: #fff;
+      --meter-face: #eee;
+      --meter-mark: #333;
+      --meter-output-background: #eee;
+      --meter-output-text: #1f2b2c;
+      --solution-button-background: #eee;
+      --solution-button-text: #1f2b2c;
+      --solution-button-hover: #139135;
+      --solution-button-hover-text: #1f2b2c;
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --page-background: #0b1220;
+      --page-text: #e8eef8;
+      --muted-text: #9eacc2;
+      --line: #2a3a53;
+      --header-background: #111c2e;
+      --button-background: #17243a;
+      --button-active: #087cad;
+      --button-active-text: #fff;
+      --meter-face: #17243a;
+      --meter-mark: #e8eef8;
+      --meter-output-background: #0b1423;
+      --meter-output-text: #e8eef8;
+      --solution-button-background: #17243a;
+      --solution-button-text: #e8eef8;
+      --solution-button-hover: #11752e;
+      --solution-button-hover-text: #fff;
+    }
+
     body {
       font-family: Arial, sans-serif;
       text-align: center;
+      background: var(--page-background);
+      color: var(--page-text);
+      margin: 0;
+      padding-bottom: 30px;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 14px max(20px, calc((100% - 980px) / 2));
+      background: var(--header-background);
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .top-bar h1 {
+      margin: 0;
+      font-size: 1.4rem;
+      white-space: nowrap;
+    }
+
+    .top-bar-tools,
+    .model-switch,
+    .theme-control {
+      display: flex;
+      align-items: center;
+    }
+
+    .top-bar-tools {
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .model-switch {
+      gap: 8px;
+    }
+
+    .top-bar button {
+      min-height: 38px;
+      padding: 7px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--button-background);
+      color: var(--page-text);
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .top-bar button[aria-pressed="true"] {
+      border-color: var(--button-active);
+      background: var(--button-active);
+      color: var(--button-active-text);
+    }
+
+    .top-bar button:focus-visible,
+    .theme-control input:focus-visible {
+      outline: 3px solid #55c2ff;
+      outline-offset: 2px;
+    }
+
+    .theme-control {
+      gap: 8px;
+      color: var(--muted-text);
+      font-size: 0.88rem;
+      white-space: nowrap;
+    }
+
+    .theme-control input {
+      width: 42px;
+      margin: 0;
+      cursor: pointer;
+      accent-color: #55c2ff;
+    }
+
+    .black-mark,
+    .scale-mark,
+    .scale-mark-small {
+      background: var(--meter-mark);
+    }
+
+    #svg rect[fill="black"] {
+      fill: var(--meter-mark);
+    }
+
+    #svg use[color="black"] {
+      color: var(--meter-mark);
+    }
+
+    .simulation-message {
+      max-width: 500px;
+      margin: 40px auto 0;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--muted-text);
+    }
+
+    .simulation-message h2 {
+      margin-top: 0;
+      color: var(--page-text);
+    }
+
+    #polytest-simulation {
+      max-width: 430px;
+      padding: 18px 8px;
+      margin: 0 auto;
+      border: 0;
+      color: #102127;
+      background: transparent;
+    }
+
+    .polytest-case {
+      position: relative;
+      width: 420px;
+      height: 678px;
+      box-sizing: border-box;
+      margin: 0 auto;
+      overflow: hidden;
+      border: 8px solid #253b42;
+      border-radius: 7px;
+      background: linear-gradient(#ddd 0 45%, #bababa 45% 100%);
+      box-shadow: inset 0 0 0 2px #f4f4f4, 0 8px 18px #0003;
+      color: #171717;
+    }
+
+    .polytest-sockets {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      height: 30px;
+      padding-top: 6px;
+      background: linear-gradient(#f6f6f6, #d6d6d6);
+    }
+
+    .polytest-sockets span {
+      width: 24px;
+      height: 24px;
+      border: 3px solid #333;
+      border-radius: 50%;
+      background: radial-gradient(circle at 45% 40%, #fff 0 10%, #141414 14% 55%, #555 58% 100%);
+      box-shadow: inset 0 0 0 3px #aaa, 0 1px 2px #1119;
+    }
+
+    .polytest-display {
+      position: relative;
+      width: 368px;
+      height: 242px;
+      margin: 2px auto 0;
+      overflow: hidden;
+      border: 4px solid #444;
+      border-radius: 2px;
+      background: #fff;
+      box-shadow: inset 0 0 7px #666, 0 2px 3px #2228;
+      cursor: crosshair;
+    }
+
+    #polytest-scale {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      color: #202b2b;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    #polytest-scale-arcs {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .polytest-scale-arc {
+      fill: none;
+      stroke-width: 1.7;
+    }
+
+    .polytest-scale-arc-black,
+    .polytest-tick-black {
+      stroke: #202020;
+    }
+
+    .polytest-scale-arc-red,
+    .polytest-tick-red {
+      stroke: #c52b34;
+    }
+
+    .polytest-tick {
+      stroke-width: 1.3;
+    }
+
+    .polytest-scale-label {
+      font: bold 16px Arial, sans-serif;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    .polytest-scale-label-black,
+    .polytest-scale-label-shared {
+      fill: #202020;
+    }
+
+    .polytest-scale-label-red {
+      fill: #c52b34;
+    }
+
+    .polytest-scale-title {
+      fill: #202020;
+      font: bold 16px Arial, sans-serif;
+      text-anchor: middle;
+    }
+
+    .polytest-scale-title-inner {
+      fill: #c52b34;
+    }
+
+    .polytest-scale-symbol {
+      fill: none;
+      stroke: #202020;
+      stroke-width: 1.5;
+    }
+
+    .polytest-scale-symbol-ac {
+      stroke: #c52b34;
+    }
+
+    .polytest-scale-symbol-ac-wave {
+      fill: none;
+      stroke: #c52b34;
+      stroke-width: 1.5;
+    }
+
+    #polytest-needle {
+      position: absolute;
+      z-index: 0;
+      bottom: 0;
+      left: 50%;
+      width: 2px;
+      height: 180px;
+      border-radius: 2px 2px 0 0;
+      background: #ff0000;
+      transform: translateX(-50%) rotate(-55deg);
+      transform-origin: bottom center;
+      pointer-events: none;
+    }
+
+    .polytest-name {
+      position: absolute;
+      top: 328px;
+      right: 16px;
+      margin: 0;
+      color: #171717;
+      font-size: 25px;
+      font-weight: bold;
+      letter-spacing: 0.02em;
+    }
+
+    .polytest-control-area {
+      position: absolute;
+      top: 385px;
+      right: 8px;
+      bottom: 8px;
+      left: 8px;
+    }
+
+    .polytest-range-dial {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 306px;
+    }
+
+    .polytest-range-arcs {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .polytest-range-arc {
+      fill: none;
+      stroke: #222;
+      stroke-width: 4;
+    }
+
+    .polytest-range-detent {
+      position: absolute;
+      z-index: 1;
+      top: 50%;
+      left: 50%;
+      width: 4px;
+      height: 20px;
+      background: #222;
+      pointer-events: none;
+    }
+
+    .polytest-range-label {
+      position: absolute;
+      width: 60px;
+      height: 32px;
+      box-sizing: border-box;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: #111;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font: bold 13px Arial, sans-serif;
+      line-height: 14px;
+      cursor: pointer;
+      z-index: 3;
+    }
+
+    .polytest-range-label-current-low {
+      width: 68px;
+      flex-direction: row;
+      justify-content: center;
+      gap: 4px;
+      font-weight: bold;
+    }
+
+    .polytest-range-label-current-high {
+      width: 48px;
+      flex-direction: column;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .polytest-range-label-current-high .polytest-range-ac {
+      order: 0;
+    }
+
+    .polytest-range-label-current-high .polytest-range-dc {
+      order: 1;
+    }
+
+    .polytest-range-label[data-group="voltage"] .polytest-range-dc {
+      order: 0;
+    }
+
+    .polytest-range-label[data-group="voltage"] .polytest-range-ac {
+      order: 1;
+    }
+
+    .polytest-range-label[data-group="voltage"] {
+      width: 54px;
+      justify-content: center;
+      gap: 4px;
+      font-weight: bold;
+    }
+
+    .polytest-range-ac {
+      color: #d32236;
+    }
+
+    .polytest-range-dc {
+      color: #111;
+    }
+
+    .polytest-range-label:focus-visible,
+    #polytest-ac-switch:focus-visible,
+    .polytest-solution-button:focus-visible,
+    .polytest-random-button:focus-visible {
+      outline: 3px solid #126987;
+      outline-offset: 2px;
+    }
+
+    .polytest-range-knob {
+      position: absolute;
+      z-index: 2;
+      top: 50%;
+      left: 50%;
+      width: 216px;
+      height: 216px;
+      border: 4px solid #444;
+      border-radius: 50%;
+      background: #b6b6b6;
+      box-shadow: inset 0 0 0 2px #dedede, 0 3px 4px #2229;
+      transform: translate(-50%, -50%);
+      transition: transform 160ms ease-out;
+      pointer-events: none;
+    }
+
+    .polytest-range-pointer {
+      position: absolute;
+      top: 5px;
+      left: 50%;
+      width: 4px;
+      height: 60px;
+      border-radius: 2px;
+      background: #eee;
+      transform: translateX(-50%);
+    }
+
+    .polytest-range-pointer2 {
+      position: absolute;
+      top: 3px;
+      left: 50%;
+      width: 15px;
+      height: 180px;
+      border-radius: 2px;
+      background: #222;
+      transform: translateX(-50%) translateY(-2px);
+    }
+
+    .polytest-range-unit {
+      position: absolute;
+      top: 244px;
+      padding: 2px 7px;
+      background: #111;
+      color: #fff;
+      font: bold 17px Arial, sans-serif;
+    }
+
+    .polytest-range-unit-current {
+      left: 4px;
+    }
+
+    .polytest-range-unit-voltage {
+      right: 4px;
+    }
+
+    .polytest-ac-control {
+      position: absolute;
+      top: -67px;
+      left: 12px;
+      width: 70px;
+      height: 88px;
+      text-align: center;
+    }
+
+    #polytest-ac-switch {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      padding: 0;
+      border: 1px solid #444;
+      border-radius: 50%;
+      background: #b6b6b6;
+      cursor: pointer;
+      appearance: none;
+      box-shadow: inset 0 0 0 1px #dedede, 0 1px 1px #2229;
+    }
+
+    .polytest-mode-rotor {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 60px;
+      height: 60px;
+      transform: translate(-50%, -50%) rotate(-30deg);
+      transition: transform 160ms ease-out;
+      pointer-events: none;
+    }
+
+    .polytest-mode-pointer {
+      position: absolute;
+      z-index: 1;
+      top: 0;
+      left: 50%;
+      width: 2px;
+      height: 17px;
+      border-radius: 4px;
+      background: #eee;
+      transform: translateX(-50%);
+    }
+
+    .polytest-mode-pointer2 {
+      position: absolute;
+      top: 1px;
+      left: 50%;
+      width: 4px;
+      height: 50px;
+      border-radius: 2px;
+      background: #111;
+      transform: translateX(-50%) translateY(-1px);
+    }
+
+    .polytest-ac-symbols {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 2px;
+      padding: 0 2px;
+    }
+
+    .polytest-ac-symbols svg {
+      width: 24px;
+      height: 24px;
+      overflow: visible;
+    }
+
+    .polytest-dc-symbol {
+      stroke: #111;
+      stroke-width: 3;
+    }
+
+    .polytest-ac-symbol {
+      fill: none;
+      stroke: #d32236;
+      stroke-width: 3;
+      stroke-linecap: round;
+    }
+
+    .polytest-action-row {
+      position: absolute;
+      top: 288px;
+      left: 14px;
+      right: 14px;
+      display: grid;
+      grid-template-columns: 82px minmax(0, 1fr);
+      gap: 0;
+      height: 32px;
+    }
+
+    #polytest-output {
+      display: grid;
+      min-width: 0;
+      box-sizing: border-box;
+      place-items: center;
+      padding: 4px;
+      border: 2px solid #333;
+      background: #f4f4f4;
+      color: #111;
+      font-size: 15px;
+      text-align: center;
+    }
+
+    .polytest-solution-button {
+      height: 32px;
+      box-sizing: border-box;
+      padding: 2px;
+      border: 2px solid #333;
+      background: linear-gradient(#8290b2, #5c688a);
+      color: #fff;
+      font: 14px Arial, sans-serif;
+      cursor: pointer;
+    }
+
+    .polytest-random-button {
+      position: absolute;
+      top: 360px;
+      right: 18px;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: #111;
+      color: #fff;
+      font: 16px Arial, sans-serif;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .polytest-random-button:hover {
+      background: #0c6263;
+    }
+
+    @media (max-width: 420px) {
+      #polytest-simulation {
+        box-sizing: border-box;
+        width: 100%;
+        padding: 16px 4px;
+      }
+
+      .polytest-case {
+        position: relative;
+        left: 50%;
+        margin-left: 0;
+        transform: translateX(-50%) scale(.88);
+        transform-origin: top center;
+        margin-bottom: -81px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .polytest-case {
+        transform: translateX(-50%) scale(.8);
+        margin-bottom: -136px;
+      }
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    footer {
+      width: 100%;
+      max-width: 980px;
+      box-sizing: border-box;
+      margin: 10rem auto 0;
+      padding: 1.2rem 1rem 0;
+      border-top: 1px solid var(--line);
+      color: var(--muted-text);
+      font-size: 0.75rem;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    footer summary {
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--muted-text);
+      margin-bottom: 0.3rem;
+      list-style: none;
+      text-align: left;
+    }
+
+    footer summary:hover {
+      color: var(--page-text);
+    }
+
+    footer summary::-webkit-details-marker {
+      display: none;
+    }
+
+    footer summary::before {
+      content: "▶ ";
+      font-size: 0.65rem;
+      margin-right: 0.3rem;
+    }
+
+    details[open] summary::before {
+      content: "▼ ";
+    }
+
+    footer a {
+      color: var(--muted-text);
+      text-decoration: underline;
+    }
+
+    footer a:hover {
+      color: var(--page-text);
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.2rem;
+      text-align: left;
+    }
+
+    .footer-section {
+      text-align: left;
+    }
+
+    .footer-section p {
+      margin: 0.3rem 0 0 0;
+      text-align: left;
     }
 	
 	
@@ -25,7 +724,7 @@
     #multimeter-container {
       width: 450px;
       height: 270px;
-      background: #eee;
+      background: var(--meter-face);
       border-top-left-radius: 18px;
       border-top-right-radius: 18px;
       border-bottom-left-radius: 0;
@@ -183,7 +882,7 @@
       left: 50%;
       bottom: 0;
       width: 6px;
-      background: #333;
+      background: var(--meter-mark);
       transform-origin: bottom center;
       height: 1px;
 	}
@@ -193,7 +892,7 @@
       left: 50%;
       bottom: 0;
       width: 2px;
-      background: #333;
+      background: var(--meter-mark);
       transform-origin: bottom center;
     }
 	
@@ -202,7 +901,7 @@
       left: 50%;
       bottom: 0;
       width: 1px;
-      background: #333;
+      background: var(--meter-mark);
       transform-origin: bottom center;
     }
 	
@@ -242,7 +941,8 @@
 	  left: 127px;
 	  padding: 10px 30px;
 	  border: 2px solid #444;
-	  background: #eee;
+	  background: var(--meter-output-background);
+	  color: var(--meter-output-text);
 	  position: absolute;
     }
     .button1 {
@@ -254,13 +954,15 @@
       top: 272px;
 	  left: -2px;
       border: 2px solid #444;
-	  background: #eee;
+	  background: var(--solution-button-background);
+	  color: var(--solution-button-text);
 	  cursor: pointer;
 	  transition: all 0.2s ease;
     }
 	
 	.button1:hover {
-	  background-color: #139135;
+	  background-color: var(--solution-button-hover);
+	  color: var(--solution-button-hover-text);
 	}
 	
 	.runde-buttons {
@@ -299,6 +1001,7 @@
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%) ;
+      transition: transform 160ms ease-out;
       cursor: pointer;
 	  border: 4px solid black;
     }
@@ -343,12 +1046,52 @@
       transform-origin: center center;
       white-space: nowrap;
     }
+
+    @media (max-width: 650px) {
+      .top-bar {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+        padding: 14px 16px;
+      }
+
+      .top-bar-tools {
+        width: 100%;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .model-switch {
+        gap: 6px;
+      }
+
+      .top-bar button {
+        padding: 7px 9px;
+        font-size: 0.88rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>Multimeter-Simulation</h1>
+  <header class="top-bar">
+    <h1>Multimeter-Simulation</h1>
+    <div class="top-bar-tools">
+      <div class="model-switch" role="group" aria-label="Multimeter-Modell auswählen">
+        <button type="button" class="model-button" data-model="metrawatt" aria-pressed="true">Metrawatt MA 1H</button>
+        <button type="button" class="model-button" data-model="polytest" aria-pressed="false">Polytest</button>
+      </div>
+      <label class="theme-control" for="theme-switch">
+        <span>Dark</span>
+        <input id="theme-switch" type="range" min="0" max="1" step="1" value="1" aria-label="Darstellung zwischen Darkmode und Normalmodus umschalten" />
+        <span>Normal</span>
+      </label>
+      <button type="button" id="download-simulation">Simulation downloaden</button>
+    </div>
+  </header>
+  <main id="simulation-area">
+  <section id="metrawatt-simulation" aria-label="Metrawatt MA 1H Simulation">
   <div id="multimeter-case">
-  <div id="multimeter-container" onclick="setNeedleOnClick(event)">
+  <div id="multimeter-container">
     <div id="graymarkbox">
 	  <div id="graymark"></div>
     </div>
@@ -371,8 +1114,8 @@
     </div>
 	
   </div>
-  <button class="button1" onclick="showValue()">Lösung</button>
-  <button class="runde-buttons" onclick="randomval()">Z</button>
+  <button class="button1">Lösung</button>
+  <button class="runde-buttons">Z</button>
   <div id="output"></div>
   <div id="rotary-container"></div>
   
@@ -460,17 +1203,502 @@
   
 </svg>
 </div>
-<div style="font-size: 0.95em; color: #555; margin-top:150px; margin-bottom: 1em;">
-    <a href="https://www.loessnitzgymnasium.de" target="_blank" rel="license noopener" style="color: #555; text-decoration: none;">
-      <span>Umsetzung: Moritz Thauer - Lößnitzgymnasium Radebeul</span><br>
-	</a>
-	<span>
-        <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="license noopener" style="color: #555; text-decoration: none;">
-          Dieses Werk steht unter einer Creative Commons Namensnennung - Nicht kommerziell - Weitergabe unter gleichen Bedingungen 4.0 International Lizenz (CC BY-NC-SA 4.0). <img alt="Creative Commons Lizenzvertrag" style="border-width:0;vertical-align:middle;height:18px;margin-right:2px;" src="https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png">
-        </a>
-    </span>
+  </section>
+  <section id="polytest-simulation" aria-label="Polytest 1 W Simulation" hidden>
+    <div class="polytest-case">
+      <div class="polytest-sockets" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="polytest-display" id="polytest-display" aria-label="Polytest-Messskala, anklicken um den Zeiger einzustellen">
+        <svg id="polytest-scale-arcs" viewBox="0 0 368 242" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <svg id="polytest-scale" viewBox="0 0 368 242" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <div id="polytest-needle"></div>
+      </div>
+      <div class="polytest-action-row">
+        <button type="button" class="polytest-solution-button" id="polytest-solution">Lösung</button>
+        <div id="polytest-output" aria-live="polite"></div>
+      </div>
+      <div class="polytest-name">POLYTEST 1 W</div>
+      <button type="button" class="polytest-random-button" id="polytest-random" aria-label="Zufallsaufgabe">Z</button>
+      <div class="polytest-control-area">
+        <div id="polytest-range-dial" class="polytest-range-dial" role="group" aria-label="Messbereich wählen">
+          <svg id="polytest-range-arcs" class="polytest-range-arcs" viewBox="0 0 388 306" aria-hidden="true"></svg>
+          <div class="polytest-range-options-current" id="polytest-range-options-current"></div>
+          <div class="polytest-range-options-voltage" id="polytest-range-options-voltage"></div>
+          <div class="polytest-range-knob" id="polytest-range-knob" aria-hidden="true">
+            <div class="polytest-range-pointer2"></div>
+            <div class="polytest-range-pointer" id="polytest-range-pointer"></div>
+          </div>
+        </div>
+        <div class="polytest-range-unit polytest-range-unit-current">mA</div>
+        <div class="polytest-range-unit polytest-range-unit-voltage">V</div>
+        <div class="polytest-ac-control" role="group" aria-label="Gleich- oder Wechselspannung">
+          <div class="polytest-ac-symbols" aria-hidden="true">
+            <svg id="polytest-dc-symbol" viewBox="0 0 32 18">
+              <line class="polytest-dc-symbol" x1="2" y1="9" x2="30" y2="9"></line>
+            </svg>
+            <svg id="polytest-ac-symbol" viewBox="0 0 30 40">
+              <path class="polytest-ac-symbol" d="M 0 20 C 15 0, 15 40, 30 20"></path>
+            </svg>
+          </div>
+          <button type="button" id="polytest-ac-switch" aria-label="Spannungsart: Gleichspannung" aria-pressed="false">
+            <span class="polytest-mode-rotor" id="polytest-mode-rotor" aria-hidden="true">
+              <span class="polytest-mode-pointer2"></span>
+              <span class="polytest-mode-pointer"></span>
+            </span>
+          </button>
+        </div>
+      </div>
     </div>
+  </section>
+  </main>
+
+  <footer>
+    <div class="footer-grid">
+      <details class="footer-section">
+        <summary>Impressum</summary>
+        <p>
+          Anbieter: Moritz Thauer<br>
+          Lößnitzgymnasium Radebeul<br>
+          Steinbachstraße 21<br>
+          01445 Radebeul<br>
+          E-Mail: <a href="mailto:moritz.thauer@loegy.lernsax.de">moritz.thauer@loegy.lernsax.de</a>
+        </p>
+      </details>
+
+      <details class="footer-section">
+        <summary>Datenschutzhinweise</summary>
+        <p>
+          Diese Seite speichert keine personenbezogenen Daten. Es werden lediglich technische Zugriffsdaten (z. B. IP-Adresse, Browser-Typ) vom Hosting-Provider (GitHub Pages) im Rahmen des Betriebs protokolliert. Weitere Informationen findest du in der <a href="https://docs.github.com/de/site-policy/privacy-policies/github-privacy-statement" target="_blank" rel="noopener noreferrer">GitHub Privacy Statement</a>.
+        </p>
+      </details>
+
+      <details class="footer-section">
+        <summary>Haftungsausschluss</summary>
+        <p>
+          Alle Inhalte wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte wird jedoch keine Gewähr übernommen. Die Nutzung der Inhalte erfolgt auf eigene Verantwortung.
+        </p>
+      </details>
+    </div>
+    <p style="text-align: center;">
+      Umsetzung: Moritz Thauer –
+      E-Mail: <a href="mailto:moritz.thauer@loegy.lernsax.de">moritz.thauer@loegy.lernsax.de</a> –
+      <a href="https://www.loessnitzgymnasium.de/">Lößnitzgymnasium Radebeul</a>.
+      Diese Seite steht unter der
+      <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.de">Creative-Commons-Lizenz CC BY-NC-SA 4.0</a>.
+    </p>
+  </footer>
+
   <script>
+    const themeSwitch = document.getElementById('theme-switch');
+    if (themeSwitch) {
+      themeSwitch.addEventListener('input', () => {
+        document.documentElement.dataset.theme = themeSwitch.value === '0' ? 'dark' : 'light';
+      });
+    }
+
+    const modelButtons = document.querySelectorAll('.model-button');
+    const metrawattSimulation = document.getElementById('metrawatt-simulation');
+    const polytestSimulation = document.getElementById('polytest-simulation');
+    if (metrawattSimulation && polytestSimulation) {
+      modelButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const isMetrawatt = button.dataset.model === 'metrawatt';
+          metrawattSimulation.hidden = !isMetrawatt;
+          polytestSimulation.hidden = isMetrawatt;
+          modelButtons.forEach((modelButton) => {
+            modelButton.setAttribute('aria-pressed', String(modelButton === button));
+          });
+        });
+      });
+    }
+
+    if (polytestSimulation) {
+    const polytestRanges = [
+      { group: 'current', angle: -115, acLabel: '1', acMax: 1, acScale: 10, dcLabel: '0,3', dcMax: 0.3, dcScale: 30, unit: 'mA' },
+      { group: 'current', angle: -102.5, acLabel: '3', acMax: 3, acScale: 30, dcLabel: '1', dcMax: 1, dcScale: 10, unit: 'mA' },
+      { group: 'current', angle: -85, acLabel: '10', acMax: 10, acScale: 10, dcLabel: '3', dcMax: 3, dcScale: 30, unit: 'mA' },
+      { group: 'current', angle: -74, acLabel: '30', acMax: 30, acScale: 30, dcLabel: '10', dcMax: 10, dcScale: 10, unit: 'mA' },
+      { group: 'current', angle: -50, acLabel: '100', acMax: 100, acScale: 10, dcLabel: '30', dcMax: 30, dcScale: 30, unit: 'mA' },
+      { group: 'current', angle: -20, acLabel: '300', acMax: 300, acScale: 30, dcLabel: '100', dcMax: 100, dcScale: 10, unit: 'mA' },
+      { group: 'current', angle: -4, acLabel: '1000', acMax: 1000, acScale: 10, dcLabel: '300', dcMax: 300, dcScale: 30, unit: 'mA' },
+      { group: 'current', angle: 25, acLabel: '3000', acMax: 3000, acScale: 30, dcLabel: '1000', dcMax: 1000, dcScale: 10, unit: 'mA' },
+      { group: 'voltage', angle: 62, acLabel: '', acMax: null, acScale: null, dcLabel: '60', dcMax: 60, dcScale: 30, unit: 'V' },
+      { group: 'voltage', angle: 75, acLabel: '60', acMax: 60, acScale: 30, dcLabel: '20', dcMax: 20, dcScale: 10, unit: 'V' },
+      { group: 'voltage', angle: 90, acLabel: '30', acMax: 30, acScale: 30, dcLabel: '10', dcMax: 10, dcScale: 10, unit: 'V' },
+      { group: 'voltage', angle: 105, acLabel: '10', acMax: 10, acScale: 10, dcLabel: '3', dcMax: 3, dcScale: 30, unit: 'V' },
+      { group: 'voltage', angle: 118, acLabel: '3', acMax: 3, acScale: 30, dcLabel: '1', dcMax: 1, dcScale: 10, unit: 'V' }
+    ];
+    const polytestSvg = document.getElementById('polytest-scale');
+    const polytestScaleArcs = document.getElementById('polytest-scale-arcs');
+    const polytestDisplay = document.getElementById('polytest-display');
+    const polytestNeedle = document.getElementById('polytest-needle');
+    const polytestRangeDial = document.getElementById('polytest-range-dial');
+    const polytestRangeKnob = document.getElementById('polytest-range-knob');
+    const polytestRangeArcs = document.getElementById('polytest-range-arcs');
+    const polytestCurrentRanges = document.getElementById('polytest-range-options-current');
+    const polytestVoltageRanges = document.getElementById('polytest-range-options-voltage');
+    const polytestAcSwitch = document.getElementById('polytest-ac-switch');
+    const polytestModeRotor = document.getElementById('polytest-mode-rotor');
+    const polytestDcSymbol = document.getElementById('polytest-dc-symbol');
+    const polytestAcSymbol = document.getElementById('polytest-ac-symbol');
+    const polytestOutput = document.getElementById('polytest-output');
+    const polytestCenter = { x: 184, y: 242 };
+    const polytestDialCenter = { x: 194, y: 153 };
+    const polytestRangeLabels = [];
+    let polytestRangeIndex = 10;
+    let polytestIsAC = false;
+    let polytestValue = 0;
+
+    function polytestPoint(radius, angle) {
+      const radians = angle * Math.PI / 180;
+      return {
+        x: polytestCenter.x + radius * Math.sin(radians),
+        y: polytestCenter.y - radius * Math.cos(radians)
+      };
+    }
+
+    function polytestDialPoint(radius, angle) {
+      const radians = angle * Math.PI / 180;
+      return {
+        x: polytestDialCenter.x + radius * Math.sin(radians),
+        y: polytestDialCenter.y - radius * Math.cos(radians)
+      };
+    }
+
+    function addPolytestScale() {
+      const svgNamespace = 'http://www.w3.org/2000/svg';
+      const makeSvgElement = (name, attributes, text, target = polytestSvg) => {
+        const element = document.createElementNS(svgNamespace, name);
+        Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, value));
+        if (text !== undefined) element.textContent = text;
+        target.appendChild(element);
+        return element;
+      };
+
+      const makeScaleArc = (radius, color, startAngle = -55) => {
+        const tickHalfWidth = 1.3 / 2;
+        const endpointOffset = Math.atan2(tickHalfWidth, radius) * 180 / Math.PI;
+        const start = polytestPoint(radius, startAngle - endpointOffset);
+        const end = polytestPoint(radius, 55 + endpointOffset);
+        makeSvgElement('path', {
+          d: `M ${start.x} ${start.y} A ${radius} ${radius} 0 0 1 ${end.x} ${end.y}`,
+          class: `polytest-scale-arc polytest-scale-arc-${color}`
+        }, undefined, polytestScaleArcs);
+      };
+      const drawTenScale = (
+        radius, color, labelRadius, outward = false, startTick = 0, startFraction = 0
+      ) => {
+        if (startTick > 0) {
+          const angle = -55;
+          const start = polytestPoint(outward ? radius : radius - 12, angle);
+          const end = polytestPoint(outward ? radius + 12 : radius, angle);
+          makeSvgElement('line', {
+            x1: start.x, y1: start.y, x2: end.x, y2: end.y,
+            class: `polytest-tick polytest-tick-${color}`
+          });
+          const label = polytestPoint(labelRadius, angle);
+          makeSvgElement('text', {
+            x: label.x,
+            y: label.y,
+            transform: `rotate(${angle} ${label.x} ${label.y})`,
+            class: `polytest-scale-label polytest-scale-label-${color}`
+          }, '0');
+        }
+        for (let tick = startTick; tick <= 50; tick++) {
+          const fraction = startTick > 0
+            ? startFraction + (tick - startTick) / (50 - startTick) * (1 - startFraction)
+            : tick / 50;
+          const angle = -55 + 110 * fraction;
+          const length = tick % 10 === 0 ? 12 : tick % 5 === 0 ? 8 : 5;
+          const start = polytestPoint(outward ? radius : radius - length, angle);
+          const end = polytestPoint(outward ? radius + length : radius, angle);
+          makeSvgElement('line', {
+            x1: start.x, y1: start.y, x2: end.x, y2: end.y,
+            class: `polytest-tick polytest-tick-${color}`
+          });
+          if (tick % 10 === 0) {
+            const label = polytestPoint(labelRadius, angle);
+            makeSvgElement('text', {
+              x: label.x,
+              y: label.y,
+              transform: `rotate(${angle} ${label.x} ${label.y})`,
+              class: `polytest-scale-label polytest-scale-label-${color}`
+            }, String(tick / 5));
+          }
+        }
+      };
+      const drawThirtyScale = (radius, color, startTick = 0, outward = false, startFraction = 0) => {
+        if (startTick > 0) {
+          const angle = -55;
+          const start = polytestPoint(outward ? radius : radius - 10, angle);
+          const end = polytestPoint(outward ? radius + 10 : radius, angle);
+          makeSvgElement('line', {
+            x1: start.x, y1: start.y, x2: end.x, y2: end.y,
+            class: `polytest-tick polytest-tick-${color}`
+          });
+        }
+        for (let tick = startTick; tick <= 31; tick++) {
+          const fraction = startTick > 0
+            ? startFraction + (tick - startTick) / (31 - startTick) * (1 - startFraction)
+            : tick / 31;
+          const angle = -55 + 110 * fraction;
+          const length = tick % 10 === 0 ? 10 : tick % 5 === 0 ? 7 : 4;
+          const start = polytestPoint(outward ? radius : radius - length, angle);
+          const end = polytestPoint(outward ? radius + length : radius, angle);
+          makeSvgElement('line', {
+            x1: start.x, y1: start.y, x2: end.x, y2: end.y,
+            class: `polytest-tick polytest-tick-${color}`
+          });
+        }
+      };
+
+      makeScaleArc(164, 'black');
+      makeScaleArc(156, 'black');
+      makeScaleArc(116, 'red');
+      makeScaleArc(108, 'red');
+      drawTenScale(164, 'black', 184, true);
+      drawThirtyScale(156, 'black');
+      drawThirtyScale(116, 'red', 5, true, 0.1);
+      drawTenScale(108, 'red', 82, false, 10, 0.12);
+      [0, 10, 20, 30].forEach((value) => {
+        const angle = -55 + 110 * (value / 31);
+        const label = polytestPoint(136, angle);
+        makeSvgElement('text', {
+          x: label.x, y: label.y,
+          transform: `rotate(${angle} ${label.x} ${label.y})`,
+          class: 'polytest-scale-label polytest-scale-label-shared'
+        }, String(value));
+      });
+
+      makeSvgElement('circle', { cx: 56, cy: 58, r: 13, class: 'polytest-scale-symbol' });
+      makeSvgElement('line', { x1: 49, y1: 58, x2: 63, y2: 58, class: 'polytest-scale-symbol' });
+      makeSvgElement('circle', { cx: 312, cy: 58, r: 13, class: 'polytest-scale-symbol polytest-scale-symbol-ac' });
+      makeSvgElement('path', {
+        d: 'M 303 58 C 312 46, 312 70, 321 58',
+        class: 'polytest-scale-symbol-ac-wave'
+      });
+      const addScaleTitle = (radius, color, text) => {
+        const angle = 55;
+        const point = polytestPoint(radius, angle);
+        const radians = angle * Math.PI / 180;
+        const x = point.x + 30 * Math.cos(radians) + 6;
+        const y = point.y + 22 * Math.sin(radians) + 20;
+        makeSvgElement('text', {
+          x, y,
+          transform: `rotate(${angle} ${x} ${y})`,
+          class: `polytest-scale-title${color === 'red' ? ' polytest-scale-title-inner' : ''}`
+        }, text);
+      };
+      addScaleTitle(156, 'black', 'V·A −');
+      addScaleTitle(108, 'red', 'V·A ~');
+
+      polytestRanges.forEach((range, index) => {
+        const label = document.createElement('button');
+        const point = polytestDialPoint(128, range.angle);
+        const marker = document.createElement('span');
+        const acValue = document.createElement('span');
+        const dcValue = document.createElement('span');
+        const currentIndex = index;
+        label.type = 'button';
+        label.className = `polytest-range-label${range.group === 'current'
+          ? currentIndex < 5 ? ' polytest-range-label-current-low' : ' polytest-range-label-current-high'
+          : ''}`;
+        label.dataset.group = range.group;
+        if (range.group === 'current' && currentIndex < 5) {
+          const labelOffsets = [
+            { top: 4, left: 3 },
+            { top: 0, left: 0 },
+            { top: 0, left: 0 },
+            { top: -5, left: 5 },
+            { top: 0, left: 0 }
+          ];
+          label.style.top = `${point.y - 31 + labelOffsets[currentIndex].top}px`;
+          label.style.left = `${labelOffsets[currentIndex].left}px`;
+        } else if (range.group === 'current') {
+          label.style.top = '-28px';
+          label.style.left = `${116 + (currentIndex - 5) * 58}px`;
+        } else {
+          const voltageOffsets = [
+                { top: 4, left: 0 },
+                { top: 4, left: 4 },
+                { top: 4, left: 4 },
+                { top: 4, left: 4 },
+                { top: 8, left: 4 }
+          ];
+          label.style.top = `${point.y - 40 + voltageOffsets[index - 8].top}px`;
+          label.style.left = `${320 + voltageOffsets[index - 8].left}px`;
+        }
+        const labelWidth = range.group === 'voltage' ? 54 : currentIndex < 5 ? 68 : 48;
+        const labelCenterX = Number.parseFloat(label.style.left) + labelWidth / 2;
+        const labelCenterY = Number.parseFloat(label.style.top) + 16;
+        range.dialAngle = Math.atan2(
+          labelCenterX - polytestDialCenter.x,
+          polytestDialCenter.y - labelCenterY
+        ) * 180 / Math.PI;
+        label.setAttribute(
+          'aria-label',
+          `Wechselspannung: ${range.acLabel ? `${range.acLabel} ${range.unit}` : 'nicht verfügbar'}; Gleichspannung: ${range.dcLabel} ${range.unit}`
+        );
+        acValue.className = 'polytest-range-ac';
+        acValue.textContent = range.acLabel;
+        dcValue.className = 'polytest-range-dc';
+        dcValue.textContent = range.dcLabel;
+        if (range.group === 'voltage') {
+          label.appendChild(dcValue);
+          label.appendChild(acValue);
+        } else {
+          label.appendChild(acValue);
+          label.appendChild(dcValue);
+        }
+        label.addEventListener('click', () => {
+          polytestRangeIndex = index;
+          updatePolytestRange();
+          clearPolytestOutput();
+        });
+        (range.group === 'current' ? polytestCurrentRanges : polytestVoltageRanges).appendChild(label);
+        polytestRangeLabels.push(label);
+
+        marker.className = 'polytest-range-detent';
+        marker.style.transform = `translate(-50%, -50%) rotate(${range.dialAngle}deg) translateY(-128px)`;
+        polytestRangeDial.appendChild(marker);
+      });
+    }
+
+    function addPolytestRangeArcs() {
+      const radius = 118;
+      const addArc = (startIndex, endIndex) => {
+        const startAngle = polytestRanges[startIndex].dialAngle;
+        const endAngle = polytestRanges[endIndex].dialAngle;
+        const direction = Math.sign(endAngle - startAngle);
+        const endpointOffset = Math.atan2(2, radius) * 180 / Math.PI;
+        const extendedStartAngle = startAngle - direction * endpointOffset;
+        const extendedEndAngle = endAngle + direction * endpointOffset;
+        const start = polytestDialPoint(radius, extendedStartAngle);
+        const end = polytestDialPoint(radius, extendedEndAngle);
+        const clockwise = direction > 0 ? 1 : 0;
+        const largeArc = Math.abs(extendedEndAngle - extendedStartAngle) > 180 ? 1 : 0;
+        const arc = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        arc.setAttribute(
+          'd',
+          `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArc} ${clockwise} ${end.x} ${end.y}`
+        );
+        arc.setAttribute('class', 'polytest-range-arc');
+        polytestRangeArcs.appendChild(arc);
+      };
+      addArc(0, 7);
+      addArc(12, 8);
+    }
+
+    function updatePolytestRange() {
+      const range = polytestRanges[polytestRangeIndex];
+      polytestRangeKnob.style.transform = `translate(-50%, -50%) rotate(${range.dialAngle}deg)`;
+      polytestRangeLabels.forEach((label, index) => {
+        label.setAttribute('aria-pressed', String(index === polytestRangeIndex));
+      });
+    }
+
+    function updatePolytestModeSwitch() {
+      const switchAngle = polytestIsAC ? 30 : -30;
+      polytestModeRotor.style.transform = `translate(-50%, -50%) rotate(${switchAngle}deg)`;
+      polytestAcSwitch.setAttribute('aria-pressed', String(polytestIsAC));
+      polytestAcSwitch.setAttribute('aria-label', `Spannungsart: ${polytestIsAC ? 'Wechselspannung' : 'Gleichspannung'}; umschalten`);
+      polytestDcSymbol.classList.toggle('is-selected', !polytestIsAC);
+      polytestAcSymbol.classList.toggle('is-selected', polytestIsAC);
+    }
+
+    function setPolytestValue(value) {
+      polytestValue = Math.max(0, Math.min(10, value));
+      const angle = -55 + 110 * (polytestValue / 10);
+      polytestNeedle.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+    }
+
+    function clearPolytestOutput() {
+      polytestOutput.textContent = '';
+    }
+
+    function showPolytestValue() {
+      const range = polytestRanges[polytestRangeIndex];
+      const max = polytestIsAC ? range.acMax : range.dcMax;
+      if (max === null) {
+        polytestOutput.textContent = 'Kein Wechselspannungsbereich';
+        return;
+      }
+      const scale = polytestIsAC ? range.acScale : range.dcScale;
+      const pointerFraction = polytestValue / 10;
+      const scaleFraction = pointerFraction;
+      const scaleMaximum = scale === 30 ? 31 : scale;
+      let scaleReading = scaleFraction * scaleMaximum;
+      if (polytestIsAC) {
+        const startValue = scale === 10 ? 2 : 5;
+        const startFraction = scale === 10 ? 0.12 : 0.1;
+        if (scaleFraction < startFraction - 1e-9) {
+          scaleReading = 0;
+        } else if (scaleFraction <= 1 + 1e-9) {
+          scaleReading = startValue
+            + (scaleFraction - startFraction)
+            / (1 - startFraction)
+            * (scaleMaximum - startValue);
+        }
+      }
+      const scaleTick = scale === 10 ? 0.2 : 1;
+      const reading = scaleReading / scale * max;
+      const readingStep = scaleTick / scale * max;
+      const roundedReading = Math.round(reading / readingStep) * readingStep;
+      const rounded = Number(roundedReading.toFixed(3)).toString().replace('.', ',');
+      polytestOutput.textContent = `${rounded} ${range.unit}`;
+    }
+
+    addPolytestScale();
+    addPolytestRangeArcs();
+    updatePolytestRange();
+    updatePolytestModeSwitch();
+    setPolytestValue(0);
+    polytestRangeDial.addEventListener('click', (event) => {
+      if (event.target.closest('button')) return;
+      const rect = polytestRangeDial.getBoundingClientRect();
+      const dx = event.clientX - (rect.left + rect.width / 2);
+      const dy = event.clientY - (rect.top + rect.height / 2);
+      const angle = Math.atan2(dx, -dy) * 180 / Math.PI;
+      polytestRangeIndex = polytestRanges.reduce((closestIndex, range, index) => {
+        const currentDifference = Math.abs(((polytestRanges[closestIndex].dialAngle - angle + 540) % 360) - 180);
+        const nextDifference = Math.abs(((range.dialAngle - angle + 540) % 360) - 180);
+        return nextDifference < currentDifference ? index : closestIndex;
+      }, 0);
+      updatePolytestRange();
+      clearPolytestOutput();
+    });
+    polytestDisplay.addEventListener('click', (event) => {
+      const rect = polytestDisplay.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.bottom - 4;
+      const angle = Math.atan2(event.clientX - centerX, centerY - event.clientY) * 180 / Math.PI;
+      setPolytestValue((Math.max(-55, Math.min(55, angle)) + 55) / 11);
+      clearPolytestOutput();
+    });
+    polytestAcSwitch.addEventListener('click', () => {
+      polytestIsAC = !polytestIsAC;
+      updatePolytestModeSwitch();
+      updatePolytestRange();
+      clearPolytestOutput();
+    });
+    document.getElementById('polytest-solution').addEventListener('click', showPolytestValue);
+    document.getElementById('polytest-random').addEventListener('click', () => {
+      const possibleReadings = [];
+      polytestRanges.forEach((range, index) => {
+        possibleReadings.push({ index, isAC: false });
+        if (range.acMax !== null) possibleReadings.push({ index, isAC: true });
+      });
+      const selection = possibleReadings[Math.floor(Math.random() * possibleReadings.length)];
+      polytestRangeIndex = selection.index;
+      polytestIsAC = selection.isAC;
+      updatePolytestModeSwitch();
+      setPolytestValue(0.5 + Math.random() * 9);
+      updatePolytestRange();
+      clearPolytestOutput();
+    });
+
+    }
+
+    if (metrawattSimulation) {
     const needle = document.getElementById('needle');
     const scale1 = document.getElementById('scale1');
     const scale2 = document.getElementById('scale2');
@@ -966,6 +2194,45 @@
       knob.style.transform = `translate(-50%, -50%) rotate(${pos * stepAngle}deg)`;
 	  }
     });
+    document.getElementById('multimeter-container').addEventListener('click', setNeedleOnClick);
+    document.querySelector('.button1').addEventListener('click', showValue);
+    document.querySelector('.runde-buttons').addEventListener('click', randomval);
+    }
+
+    const downloadButton = document.getElementById('download-simulation');
+    if (downloadButton) {
+	  downloadButton.addEventListener('click', () => {
+	    const selectedSimulationId = polytestSimulation && !polytestSimulation.hidden
+	      ? 'polytest-simulation'
+	      : 'metrawatt-simulation';
+	    const exportDocument = document.documentElement.cloneNode(true);
+	    const selectedSection = exportDocument.querySelector(`#${selectedSimulationId}`);
+	    const otherSimulationId = selectedSimulationId === 'polytest-simulation'
+	      ? 'metrawatt-simulation'
+	      : 'polytest-simulation';
+	    exportDocument.querySelector(`#${otherSimulationId}`).remove();
+	    selectedSection.removeAttribute('hidden');
+	    exportDocument.querySelector('.top-bar-tools').remove();
+
+	    const footer = exportDocument.querySelector('footer');
+	    footer.id = 'download-footer';
+	    footer.innerHTML = '<p>Umsetzung: Moritz Thauer – E-Mail: <a href="mailto:moritz.thauer@loegy.lernsax.de">moritz.thauer@loegy.lernsax.de</a> – <a href="https://www.loessnitzgymnasium.de/">Lößnitzgymnasium Radebeul</a>. Diese Seite steht unter der <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.de">Creative-Commons-Lizenz CC BY-NC-SA 4.0</a>.</p>';
+	    const style = exportDocument.querySelector('style');
+	    style.textContent += '\n    #download-footer { margin-top: 2rem; }';
+
+	    const isPolytest = selectedSimulationId === 'polytest-simulation';
+	    const filename = isPolytest ? 'polytest-simulation.html' : 'metrawatt-simulation.html';
+	    const file = new Blob(['<!DOCTYPE html>\n', exportDocument.outerHTML], { type: 'text/html;charset=utf-8' });
+	    const downloadUrl = URL.createObjectURL(file);
+	    const link = document.createElement('a');
+	    link.href = downloadUrl;
+	    link.download = filename;
+	    document.body.appendChild(link);
+	    link.click();
+	    link.remove();
+	    window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+	  });
+    }
   </script>
 </body>
 </html>
