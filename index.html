@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=400, initial-scale=1.0" />
+  <title>Multimeter-Simulation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+	
+	
+	#multimeter-case {
+      width: 450px;
+      height: 660px;
+      margin: 40px auto 0 auto;
+      background: #384b4c;
+      border-radius: 18px;
+      border: 8px solid #444;
+      position: relative;
+    }
+	
+	
+    #multimeter-container {
+      width: 450px;
+      height: 270px;
+      background: #eee;
+      border-top-left-radius: 18px;
+      border-top-right-radius: 18px;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      border: 2px solid #444;
+      position: absolute;
+	  left: -2px;
+	  top: -2px;
+    }
+	
+	#needle {
+      width: 2px;
+      height: 240px;
+      background: red;
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%) rotate(-50deg);
+      transform-origin: bottom center;
+      pointer-events: none;
+    }
+	
+    #dial1 {
+      width: 300px;
+      height: 150px;
+      position: absolute;
+      left: 50%;
+      top: 120px;
+      transform: translate(-50%, 0);
+      pointer-events: none;
+    }
+    #dial2 {
+      width: 300px;
+      height: 170px;
+      position: absolute;
+      left: 50%;
+      top: 100px;
+      transform: translate(-50%, 0);
+      pointer-events: none;
+    }
+	
+	 #dial3 {
+      width: 300px;
+      height: 200px;
+      position: absolute;
+      left: 50%;
+      top: 70px;
+      transform: translate(-50%, 0);
+      pointer-events: none;
+    }
+	
+	 #dial4 {
+      width: 300px;
+      height: 230px;
+      position: absolute;
+      left: 50%;
+      top: 40px;
+      transform: translate(-50%, 0);
+      pointer-events: none;
+    }
+	
+	#blackmarkbox {
+      width: 300px;
+      height: 170px;
+      position: absolute;
+      left: 50%;
+      top: 100px;
+      transform: translate(-50%, 0);
+      pointer-events: none;
+    }
+	
+	#blackmark {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 300px;
+      height: 150px;
+      pointer-events: none;
+    }
+	
+	#svg {
+      position: absolute;
+	  pointer-events: none;
+    }
+    
+	
+	#graymarkbox {
+      width: 300px;
+      height: 170px;
+      position: absolute;
+      left: 50%;
+      top: 100px;
+      transform: translate(-50%, 0);
+      pointer-events: none;
+    }
+	
+	
+	#graymark {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 300px;
+      height: 150px;
+      pointer-events: none;
+    }
+    
+    #scale1 {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 300px;
+      height: 150px;
+      pointer-events: none;
+    }
+	
+    #scale2 {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 300px;
+      height: 150px;
+      pointer-events: none;
+    }
+	
+	#scale3 {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 300px;
+      height: 150px;
+      pointer-events: none;
+    }
+	
+	#scale4 {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 300px;
+      height: 150px;
+      pointer-events: none;
+    }
+	
+	.gray-mark {
+	  position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 5px;
+      background: silver;
+      transform-origin: bottom center;
+      height: 5px;
+	}
+	
+	.black-mark {
+	  position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 6px;
+      background: #333;
+      transform-origin: bottom center;
+      height: 1px;
+	}
+	
+    .scale-mark {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 2px;
+      background: #333;
+      transform-origin: bottom center;
+    }
+	
+	.scale-mark-small {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 1px;
+      background: #333;
+      transform-origin: bottom center;
+    }
+	
+    .main-mark {
+      height: 22px;
+    }
+    .sub-mark {
+      height: 10px;
+    }
+    .main-mark-neg {
+      height: 16px;
+    }
+    .sub-mark-neg {
+      height: 9px;
+    }
+    .scale-label {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      font-size: 16px;
+      font-weight: bold;
+      pointer-events: none;
+    }
+	.scale-label-small {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      font-size: 10px;
+      font-weight: bold;
+      pointer-events: none;
+    }
+    #output {
+	  width: 261px;
+      height:26px;
+      top: 272px; 
+      font-size: 25px;
+	  left: 127px;
+	  padding: 10px 30px;
+	  border: 2px solid #444;
+	  background: #eee;
+	  position: absolute;
+    }
+    .button1 {
+	  position: absolute;
+	  width: 130px;   
+      height: 50px; 
+      font-size: 20px;
+	  padding: 10px 30px;
+      top: 272px;
+	  left: -2px;
+      border: 2px solid #444;
+	  background: #eee;
+	  cursor: pointer;
+	  transition: all 0.2s ease;
+    }
+	
+	.button1:hover {
+	  background-color: #139135;
+	}
+	
+	.runde-buttons {
+	  position: absolute;
+	  width: 40px;        /* oder andere gewünschte Größe */
+	  height: 40px;       /* gleiche Höhe wie Breite ergibt einen Kreis */
+	  background-color: black;
+	  top: 330px;
+	  left: 40px;
+	  color: white;
+	  border: none;
+	  border-radius: 50%; /* macht runde Buttons */
+	  cursor: pointer;
+	  font-size: 16px;      
+	  transition: all 0.2s ease;
+	}
+
+	.runde-buttons:hover {
+	  background-color: #0c6263;
+	}
+
+    #rotary-container {
+      width: 200px;
+      height: 200px;
+      margin: 40px auto;
+      position: absolute;
+      left: 50%;
+      top: 340px;
+      transform: translate(-50%, 0) rotate(48deg);
+    }
+    #rotary-knob {
+      width: 216px;
+      height: 216px;
+      background: #333;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) ;
+      cursor: pointer;
+	  border: 4px solid black;
+    }
+    #rotary-pointer {
+      width: 4px;
+      height: 60px;
+      background: white;
+      position: absolute;
+      top: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 2px;
+    }
+	
+	#rotary-pointer2 {
+      width: 15px;
+      height: 180px;
+      background: black;
+      position: absolute;
+      top: 5px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-2px);
+      border-radius: 2px;
+    }
+	
+    .rotary-mark {
+      position: absolute;
+      width: 4px;
+      height: 20px;
+      background: white;
+      top: 0;
+      left: 98px;
+      transform-origin: center 100px;
+    }
+    .rotary-label {
+      position: absolute;
+      font-size: 12px;
+      font-weight: bold;
+      color: white;
+      top: 50%;
+      left: 50%;
+      transform-origin: center center;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Multimeter-Simulation</h1>
+  <div id="multimeter-case">
+  <div id="multimeter-container" onclick="setNeedleOnClick(event)">
+    <div id="graymarkbox">
+	  <div id="graymark"></div>
+    </div>
+	
+    <div id="dial1">
+	  <div id="needle"></div>
+	  <div id="scale1"></div>
+    </div>
+    <div id="dial2">
+      <div id="scale2"></div>
+    </div>
+	<div id="dial3">
+      <div id="scale3"></div>
+    </div>
+	<div id="dial4">
+      <div id="scale4"></div>
+    </div>
+	<div id="blackmarkbox">
+	  <div id="blackmark"></div>
+    </div>
+	
+  </div>
+  <button class="button1" onclick="showValue()">Lösung</button>
+  <button class="runde-buttons" onclick="randomval()">Z</button>
+  <div id="output"></div>
+  <div id="rotary-container"></div>
+  
+  <div id="svg">
+  <svg width="700" height="700" viewBox="0 0 700 700" xmlns="http://www.w3.org/2000/svg">
+    
+    <defs>
+	  <!-- Wechselspannung -->
+      <path id="acSymbol" d="M 0 20 C 15 0, 15 40, 30 20 "stroke="currentColor" stroke-width="2" fill="none" />
+	  
+	  <!-- Gleichspannung: Langer Strich, drei kürzere darunter -->
+      <g id="dcSymbol">
+        <line x1="10" y1="10" x2="34" y2="10" stroke="currentColor" stroke-width="2"/>
+        <line x1="10" y1="15" x2="16" y2="15" stroke="currentColor" stroke-width="2"/>
+        <line x1="19" y1="15" x2="25" y2="15" stroke="currentColor" stroke-width="2"/>
+        <line x1="28" y1="15" x2="34" y2="15" stroke="currentColor" stroke-width="2"/>
+      </g>
+	  
+	  <!-- Großes V -->
+      <text id="vLetter" x="0" y="30" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="normal" fill="white">V</text>
+	  
+	  <!-- Großes A -->
+      <text id="aLetter" x="0" y="30" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="normal" fill="white">A</text>
+	  
+	  <!-- Weiße Rundung -->
+	  <path id="round" d="M 0 10 A 10 10 0 0 1 10 0" stroke="white" stroke-width="2" fill="none"/>
+    </defs>
+	<use href="#dcSymbol" x="10" y="135" color="black" />
+	<use href="#acSymbol" x="50" y="235" transform="rotate(-8) scale(0.8)" color="black"  />
+	
+    <use href="#aLetter" x="395" y="400" " />
+    <use href="#acSymbol" x="440" y="578" transform="rotate(-8) scale(0.8)" color="white"  />
+	
+	<use href="#aLetter" x="395" y="520" " />
+	<use href="#dcSymbol" x="405" y="530" color="white" />
+	
+	
+	<use href="#vLetter" x="10" y="570" " />
+	<use href="#dcSymbol" x="20" y="580" color="white" />
+	
+	<use href="#vLetter" x="10" y="430" " />
+	<use href="#acSymbol" x="-43" y="548" transform="rotate(-8) scale(0.8)" color="white" />
+	
+	<!-- Schwarze horizontale Linie (Rechteck) -->
+	<rect x="0" y="120" width="30" height="1" fill="black" pointer-events="none" />
+    <rect x="0" y="170" width="90" height="1" fill="black" pointer-events="none" />
+	<rect x="0" y="215" width="140" height="1" fill="black" pointer-events="none" />
+
+    <!-- Weiße horizontale  -->
+    <rect x="15" y="380" width="110" height="2" fill="white" pointer-events="none" />
+	<rect x="5" y="514" width="87.5" height="2" fill="white" pointer-events="none" />
+	<rect x="5" y="518" width="87.5" height="2" fill="white" pointer-events="none" />
+	<rect x="15" y="645" width="220" height="2" fill="white" pointer-events="none" />
+	
+	<rect x="317.5" y="377" width="117.5" height="2" fill="white" pointer-events="none" />
+	<rect x="337" y="479" width="107" height="2" fill="white" pointer-events="none" />
+	<rect x="337" y="483" width="107" height="2" fill="white" pointer-events="none" />
+	<rect x="300" y="595" width="145" height="2" fill="white" pointer-events="none" />
+	
+	<rect x="125" y="380" width="29.5" height="2" fill="white" pointer-events="none" transform="rotate(45 125 380)" />
+	<rect x="92" y="514" width="25" height="2" fill="white" pointer-events="none" transform="rotate(-15 92 514)" />
+	<rect x="92" y="518" width="26" height="2" fill="white" pointer-events="none" transform="rotate(-15 92 518)" />
+	
+	<rect x="319" y="378.5" width="26.5" height="2" fill="white" pointer-events="none" transform="rotate(135 319 378.5)" />
+	<rect x="300" y="597" width="27" height="2" fill="white" pointer-events="none" transform="rotate(235 300 597)" />
+	
+
+    <!-- Weiße vertikale -->
+    <rect x="5" y="390" width="2" height="124" fill="white" pointer-events="none" />
+	<rect x="5" y="518" width="2" height="118" fill="white" pointer-events="none" />
+	<rect x="233" y="591.5" width="2" height="54" fill="white" pointer-events="none" />
+	
+	<rect x="443" y="388" width="2" height="93" fill="white" pointer-events="none" />
+	<rect x="443" y="483" width="2" height="114" fill="white" pointer-events="none" />
+	
+	 <!-- Weiße Rundung -->
+	<use href="#round" x="6" y="381" />
+	<use href="#round" x="6" y="646" transform="rotate(-90 6 646)"/>
+	
+	<use href="#round" x="444" y="378" transform="rotate(90 444 378)"/>
+	
+	
+  </svg>
+  </div>
+  
+</svg>
+</div>
+<div style="font-size: 0.95em; color: #555; margin-top:150px; margin-bottom: 1em;">
+    <a href="https://www.loessnitzgymnasium.de" target="_blank" rel="license noopener" style="color: #555; text-decoration: none;">
+      <span>Umsetzung: Moritz Thauer - Lößnitzgymnasium Radebeul</span><br>
+	</a>
+	<span>
+        <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="license noopener" style="color: #555; text-decoration: none;">
+          Dieses Werk steht unter einer Creative Commons Namensnennung - Nicht kommerziell - Weitergabe unter gleichen Bedingungen 4.0 International Lizenz (CC BY-NC-SA 4.0). <img alt="Creative Commons Lizenzvertrag" style="border-width:0;vertical-align:middle;height:18px;margin-right:2px;" src="https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png">
+        </a>
+    </span>
+    </div>
+  <script>
+    const needle = document.getElementById('needle');
+    const scale1 = document.getElementById('scale1');
+    const scale2 = document.getElementById('scale2');
+	const scale3 = document.getElementById('scale3');
+    const scale4 = document.getElementById('scale4');
+    const output = document.getElementById('output');
+    const startAngle = -50; // links
+    const endAngle = 50; // rechts
+	
+	const startAngle3 = -56;
+	const startAngle4 = -54;
+    
+    let currentAngle = startAngle;
+    let currentValue = 0;
+
+    function deg2rad(angle) { return angle * Math.PI / 180; }
+
+    //Skala1 0-5 
+    function generatescale1() {
+	  const divisions = 5;
+	  // Hauptstriche
+      for (let i = 0; i <= divisions; i++) {
+        const angle = startAngle + ((endAngle - startAngle) / divisions) * i;
+        const mark = document.createElement('div');
+        mark.className = 'scale-mark main-mark';
+        mark.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-215px)`;
+        scale1.appendChild(mark);
+        // Label oben an den Strichen
+        const label = document.createElement('div');
+        label.className = 'scale-label';
+        label.textContent = i;
+        label.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-238px) rotate(${-angle}deg)`;
+        scale1.appendChild(label);
+        // Zwischenstriche
+        if (i < divisions) {
+          for (let j = 1; j < 10; j++) {
+            const subAngle = angle + ((endAngle - startAngle) / divisions) * (j / 10);
+            const subMark = document.createElement('div');
+            subMark.className = 'scale-mark sub-mark';
+            if (j === 5) {
+              subMark.style.height = '16px';
+            } else {
+              subMark.style.height = '10px';
+            }
+            subMark.style.transform = `translate(-50%,0) rotate(${subAngle}deg) translateY(-215px)`;
+            scale1.appendChild(subMark);
+          }
+        }
+      }
+    }	
+	
+    //Skala2 0-15 )
+    function generatescale2() {
+      const step = 0.2;
+      const maxVal = 15.8;
+      const division2 = maxVal / step; 
+      // Hauptstriche
+      for (let i = 0; i <= division2; i++) {
+        const val = i * step;
+        const angle = startAngle + ((endAngle - startAngle) / division2) * i;
+        const mark = document.createElement('div');
+        mark.className = 'scale-mark';
+
+        // Längere Striche bei ganzen Zahlen
+        if (val % 1 === 0) {
+          mark.classList.add('main-mark');
+		  mark.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-178px)`;
+        } else {
+          mark.classList.add('sub-mark');
+		  mark.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-190px)`;
+        }
+        scale2.appendChild(mark);
+
+        // Nur Zahlen bei 0,5,10,15 unten an den Strichen
+        if (val === 0 || val === 5 || val === 10 || val === 15) {
+          const label = document.createElement('div');
+          label.className = 'scale-label';
+          label.textContent = val.toString();
+		  if (val === 0) {
+          label.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-158px) translatex(-6px)`; // -155
+		  }
+		  if (val === 5) {
+          label.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-158px) translatex(-3px)`; // -155
+		  }
+		  if (val === 10) {
+          label.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-158px) translatex(1px)`; // -155
+		  }
+		  if (val === 15) {
+          label.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-161px) translatex(8px)`; // -155
+		  }
+          scale2.appendChild(label);
+        }
+      }
+    }
+	
+	function generatescale3() {
+      const step = 0.1;
+      const maxVal = 5;
+      const division2 = maxVal / step; 
+      // 0 als Sonderfall
+	  const label = document.createElement('div');
+      label.className = 'scale-label-small';
+      label.textContent = "0";
+	  label.style.transform = `translate(-50%,0) rotate(${-50}deg) translateY(-145px) translatex(-4px)`; // -155
+	  scale3.appendChild(label);
+	  const mark = document.createElement('div');
+      mark.className = 'scale-mark main-mark-neg';
+	  mark.style.transform = `translate(-50%,0) rotate(${-50}deg) translateY(-127px)`;
+	  scale3.appendChild(mark);
+	  
+	  // Hauptstriche
+      for (let i = 5; i <= division2; i++) {
+        const val = i * step;
+        const angle = startAngle3 + ((endAngle - startAngle3) / division2) * i;
+        const mark = document.createElement('div');
+        mark.className = 'scale-mark';
+
+        // Längere Striche bei ganzen Zahlen
+        if (val % 0.5 === 0) {
+          mark.classList.add('main-mark-neg');
+		  mark.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-127px)`;
+        } else {
+          mark.classList.add('sub-mark-neg');
+		  mark.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-127px)`;
+        }
+        scale3.appendChild(mark);
+
+        
+        if (val === 1 || val === 2 || val === 3 || val === 4 || val === 5) {
+          const label = document.createElement('div');
+          label.className = 'scale-label-small';
+          label.textContent = val.toString();
+		  if (val === 1) {
+          label.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-145px) translatex(-3px)`; // -155
+		  }
+		  if (val === 2) {
+          label.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-145px) translatex(-1px)`; // -155
+		  }
+		  if (val === 3) {
+          label.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-145px) translatex(1px)`; // -155
+		  }
+		  if (val === 4) {
+          label.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-145px) translatex(2px)`; // -155
+		  }
+		  if (val === 5) {
+          label.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-145px) translatex(5px)`; // -155
+		  }
+          scale3.appendChild(label);
+        }
+      }
+    }
+	
+    function generatescale4() {
+      const step = 0.2;
+      const maxVal = 15.8;
+      const division2 = maxVal / step ; 
+	  
+	  //0 als Sonderfall
+	  const mark = document.createElement('div');
+      mark.className = 'scale-mark-small main-mark';
+	  mark.style.transform = `translate(-50%,0) rotate(${-50}deg) translateY(-98px)`;
+	  scale4.appendChild(mark);
+	  const label = document.createElement('div');
+      label.className = 'scale-label-small';
+      label.textContent = "0";
+	  label.style.transform = `translate(-50%,0) rotate(${-50}deg) translateY(-88px) translatex(-4px)`; // -155
+	  scale4.appendChild(label);
+	  
+      // Hauptstriche
+      for (let i = 5; i <= division2; i++) {
+        const val = i * step;
+        const angle = startAngle4 + ((endAngle - startAngle4) / division2) * i;
+        const mark = document.createElement('div');
+        mark.className = 'scale-mark-small';
+		
+        // Längere Striche bei ganzen Zahlen
+        if (val % 1 === 0) {
+          mark.classList.add('main-mark');
+		  mark.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-98px)`;
+        } else {
+          mark.classList.add('sub-mark');
+		  mark.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-110px)`;
+        }
+        scale4.appendChild(mark);
+
+       
+        if (val === 5 || val === 10 || val === 15) {
+          const label = document.createElement('div');
+          label.className = 'scale-label-small';
+          label.textContent = val.toString();
+		  if (val === 5) {
+          label.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-86px) translatex(-2px)`; // -155
+		  }
+		  if (val === 10) {
+          label.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-87px) translatex(1px)`; // -155
+		  }
+		  if (val === 15) {
+          label.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-89px) translatex(5px)`; // -155
+		  }
+          scale4.appendChild(label);
+        }
+      }
+    }
+	
+	
+	
+	// grauer balken
+	function generategraymark() {
+	  const divisions = 100
+	  // Hauptstriche
+      for (let i = 0; i <= divisions; i++) {
+        const angle = startAngle + ((endAngle - startAngle) / divisions) * i;
+        const mark = document.createElement('div');
+        mark.className = 'gray-mark';
+        mark.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-205px)`;
+        graymark.appendChild(mark);
+      }
+    }
+	
+	// schwarze balken1
+	function generateblackmark1() {
+	  const divisions = 85
+	  // Hauptstriche
+      for (let i = 1; i <= divisions-1; i++) {
+        const angle = startAngle + ((endAngle - startAngle) / divisions) * i;
+        const mark = document.createElement('div');
+        mark.className = 'black-mark';
+        mark.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-127px)`;
+        blackmark.appendChild(mark);
+      }
+    }
+	
+	// schwarze balken2
+	function generateblackmark2() {
+	  const divisions = 85
+	  // Hauptstriche
+      for (let i = 1; i <= divisions-1; i++) {
+        const angle = startAngle + ((endAngle - startAngle) / divisions) * i;
+        const mark = document.createElement('div');
+        mark.className = 'black-mark';
+        mark.style.transform = `translate(-50%,0) rotate(${angle}deg) translateY(-119px)`;
+        blackmark.appendChild(mark);
+      }
+    }
+	
+	
+	// Setze Nadelwinkel basierend auf Wert (Skala 0–5)
+    function setNeedleByValue(val) {
+	  const divisions = 5; // Skala 0–5
+      const angle = startAngle + (endAngle - startAngle) * (val / divisions);
+      setNeedleAngle(angle);
+    }
+
+    // Nadel bewegen (Winkel in Grad)
+    function setNeedleAngle(angle) {
+	  const divisions = 5; // Skala 0–5
+      needle.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+      currentAngle = angle;
+      // berechne Wert (0–5)
+      const value = (angle - startAngle) / (endAngle - startAngle) * divisions;
+      currentValue = Math.round(value * 1000) / 1000;
+    }
+
+    // Nadel an Klick-Stelle setzen
+    function setNeedleOnClick(event) {
+      const container = document.getElementById('dial1');
+      const rect = container.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.bottom; // Mittelpunkt unten
+      const dx = event.clientX - cx;
+      const dy = cy - event.clientY;
+      let angle = Math.atan2(dx, dy) * 180 / Math.PI;
+      if (angle < -90) angle += 360; // Normalisieren
+      if (angle < startAngle) angle = startAngle;
+      if (angle > endAngle) angle = endAngle;
+      setNeedleAngle(angle);
+    }
+
+    
+	function randomval() {
+	  const totalPositions = 28; // wie oben definiert
+	  currentPos = Math.floor(Math.random() * totalPositions); // Ganzzahl 0..27
+	  while(currentPos === 10 || currentPos === 11 || currentPos === 12 || currentPos === 13){
+	  currentPos = Math.floor(Math.random() * totalPositions); // Ganzzahl 0..27
+	  }
+	  const stepAngle = 270 / totalPositions;
+	  knob.style.transform = `translate(-50%, -50%) rotate(${currentPos * stepAngle}deg)`;
+
+	  // 2️⃣ Zufällige Nadelstellung im erlaubten Winkel
+	  // Wir wollen echten Messbereich simulieren → Wert zwischen 0 und 5 (Skala 1)
+	  const randomValue = Math.random() * 5; 
+	  setNeedleByValue(randomValue);
+	}
+	
+
+    // Wert anzeigen der Skalen
+    function showValue() {
+      // Wert Skala1 
+      const value1 = currentValue;
+
+      // Wert Skala2 
+      const maxVal2 = 15.8;
+      let value2 = ((currentAngle - startAngle) / (endAngle - startAngle)) * maxVal2;
+      value2 = Math.round(value2 * 1000) / 1000; // 1 Dezimalstelle
+	  
+	  // Wert Skala3
+      const maxVal3 = 5;
+      let value3 = ((currentAngle - startAngle3) / (endAngle - startAngle3)) * maxVal3;
+	  if (value3 > 0.5){
+        value3 = Math.round(value3 * 1000) / 1000; // 1 Dezimalstelle};
+	  }
+	  else{
+	    value3=0;
+	  }
+	  
+	  // Wert Skala4 
+      const maxVal4 = 15.8;
+      let value4 = ((currentAngle - startAngle4) / (endAngle - startAngle4)) * maxVal4;
+	  if (value4 >= 1){
+        value4 = Math.round(value4 * 1000) / 1000; // 1 Dezimalstelle};
+	  }
+	  else{
+	    value4=0;
+	  }
+      value4 = Math.round(value4 * 1000) / 1000; // 1 Dezimalstelle
+	  
+	  //A Wechselstrom
+	  if(currentPos === 0){
+	    v = Math.round(value4/10 * 100)/ 100
+	    output.textContent = `${v} mA`;
+	  }
+	  else if(currentPos === 1){
+	    v = Math.round(value4 * 10)/ 10
+	    output.textContent = `${v} mA`;
+	  }
+	  else if(currentPos === 2){
+		v = Math.round(value4*10 * 1)/ 1
+	    output.textContent = `${v} mA`;
+	  }
+	  else if(currentPos === 3){
+		v = Math.round(value4/10 * 100)/ 100
+	    output.textContent = `${v} A`;
+	  }
+	  else if(currentPos === 4){
+	    v = Math.round(value4 * 10)/ 10
+	    output.textContent = `${v} A`;
+	  }
+	  //A Gleichstrom
+	  else if(currentPos === 5){
+	    v = Math.round(value2 * 10)/ 10
+	    output.textContent = `${v} A`;
+	  }
+	  else if(currentPos === 6){
+	    v = Math.round(value2/10 * 100)/ 100
+	    output.textContent = `${v} A`;
+	  }
+	  else if(currentPos === 7){
+	    v = Math.round(value2 *10 *1)/ 1
+	    output.textContent = `${v} mA`;
+	  }
+	  else if(currentPos === 8){
+	    v = Math.round(value2 * 10)/ 10
+	    output.textContent = `${v} mA`;
+	  }
+	  else if(currentPos === 9){
+	    v = Math.round(value2/10 * 100)/ 100
+	    output.textContent = `${v} mA`;
+	  }
+	  //V Gleichstrom
+	  else if(currentPos === 14){
+	    v = Math.round(value2/100 * 1000)/ 1000
+	    output.textContent = `${v} V`;
+	  }
+	  else if(currentPos === 15){
+	    v = Math.round(value1/10 * 100)/ 100
+	    output.textContent = `${v} V`;
+	  }
+	  else if(currentPos === 16){
+	    v = Math.round(value2/10 * 100)/ 100
+	    output.textContent = `${v} V`;
+	  }
+	  else if(currentPos === 17){
+	    v = Math.round(value1 * 10)/ 10
+	    output.textContent = `${v} V`;
+	  }
+	  else if(currentPos === 18){
+	    v = Math.round(value2 * 10)/ 10
+	    output.textContent = `${v} V`;
+	  }
+	  else if(currentPos === 19){
+	    v = Math.round(value1*10 * 1)/ 1
+	    output.textContent = `${v} V`;
+	  }
+	  else if(currentPos === 20){
+	    v = Math.round(value2*10 * 1)/ 1
+	    output.textContent = `${v} V`;
+	  }
+	  else if(currentPos === 21){
+	    v = Math.round(value1*100 * 0.1)/ 0.1
+	    output.textContent = `${v} V`;
+	  }
+	  //V Wechselstrom
+	  else if(currentPos === 22){
+	    v = Math.round(value3*100 * 0.1)/ 0.1
+	    output.textContent = `${v} V`;
+	  }
+	  else if(currentPos === 23){
+	    v = Math.round(value4*10 * 1)/ 1
+	    output.textContent = `${v} V`;
+	  }
+	  else if(currentPos === 24){
+	    v = Math.round(value3*10 * 1)/ 1
+	    output.textContent = `${v} V`;
+	  }
+	  else if(currentPos === 25){
+	    v = Math.round(value4 * 10)/ 10
+	    output.textContent = `${v} V`;
+	  }
+	  else if(currentPos === 26){
+	    v = Math.round(value3 * 10)/ 10
+	    output.textContent = `${v} V`;
+	  }
+	  else if(currentPos === 27){
+	    v = Math.round(value4/10 * 100)/ 100
+	    output.textContent = `${v} V`;
+	  }
+      //output.textContent = `Skala1: ${value1} | Skala2: ${value2} | Skala3: ${value3} | Skala4: ${value4}`;
+    }
+    setNeedleByValue(0);
+    generatescale1();
+    generatescale2();
+	generatescale3();
+    generatescale4();
+	generategraymark();
+	generateblackmark1();
+	generateblackmark2();
+    
+
+    /* ----- Drehknopf-Logik ----- */
+    const rotaryContainer = document.getElementById('rotary-container');
+    const totalPositions = 28;
+    
+
+    for (let i = 0; i < totalPositions; i++) {
+      const angle = (270 / totalPositions) * i ;
+      
+	  if(i < 10 || i > 13){
+        // Mark
+        const mark = document.createElement('div');
+        mark.className = 'rotary-mark';
+        mark.style.transform = `rotate(${angle+1}deg) translate(-50%, 0) translateY(-29px)`; //angle + rotieren
+        rotaryContainer.appendChild(mark);
+
+        // Label auf Kreis radius platzieren
+        const label = document.createElement('div');
+        label.className = 'rotary-label';
+        
+		
+		
+	    const labels = ["1,5m","15m","150m","1,5","15","15","1,5","150m","15m","1,5m","x","x","x","x","0,15","0,5","1,5","5","15","50","150","500","500","150","50","15","5","1,5"];
+	    label.textContent = labels[i]; // Wert aus dem Array
+      
+
+        const radius = 145;
+        label.style.transform = `rotate(${angle}deg) translate(0, -${radius}px) rotate(${-angle-48}deg) translateY(-11px) translateX(0px)`;
+        rotaryContainer.appendChild(label);
+	    }
+    }
+	
+	const knob = document.createElement('div');
+    knob.id = 'rotary-knob';
+    const pointer = document.createElement('div');
+    pointer.id = 'rotary-pointer';
+	const pointer2 = document.createElement('div');
+    pointer2.id = 'rotary-pointer2';
+	knob.appendChild(pointer2);
+    knob.appendChild(pointer);
+    rotaryContainer.appendChild(knob);
+
+    let currentPos = 0;
+    rotaryContainer.addEventListener('click', (event) => {
+      const rect = rotaryContainer.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = event.clientX - cx;
+      const dy = event.clientY - cy;
+      let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+      angle = (angle-45 + 90 + 360) % 360;
+      const stepAngle = 270 / totalPositions;
+	  if(angle < 90 && angle > -3 || angle > 132 && angle < 263 ){
+      let pos = Math.round(angle / stepAngle) % totalPositions;
+      currentPos = pos;
+      knob.style.transform = `translate(-50%, -50%) rotate(${pos * stepAngle}deg)`;
+	  }
+    });
+  </script>
+</body>
+</html>
